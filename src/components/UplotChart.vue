@@ -103,7 +103,7 @@ export default {
       
       this.$emit('performance', {
         renderTime: endTime - startTime,
-        memoryUsage: (memoryAfter - memoryBefore) / 1024 / 1024,
+        memoryUsage: (memoryAfter) / 1024 / 1024,
         cpuUsage: Math.random() * 15 + 5 // Simulated CPU usage
       })
     }

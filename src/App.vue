@@ -10,6 +10,8 @@
         <div class="speed-control">
           <label>Speed: </label>
           <select v-model="updateInterval">
+            <option value="4">240 FPS (4ms)</option>
+            <option value="8">120 FPS (8ms)</option>
             <option value="16">60 FPS (16ms)</option>
             <option value="33">30 FPS (33ms)</option>
             <option value="100">10 FPS (100ms)</option>
@@ -31,6 +33,30 @@
       </div>
     </div>
 
+
+    <div class="performance-table">
+      <h3>Performance Metrics</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Library</th>
+            <th>Render Time (ms)</th>
+            <th>Memory Usage (MB)</th>
+            <th>CPU Usage (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(perf, library) in performance" :key="library">
+            <td>{{ library }}</td>
+            <td>{{ perf.renderTime.toFixed(2) }}</td>
+            <td>{{ perf.memoryUsage.toFixed(2) }}</td>
+            <td>{{ perf.cpuUsage.toFixed(2) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
     <div class="charts-container">
       <div class="chart-wrapper">
         <ChartJsChart 
@@ -60,29 +86,6 @@
         />
       </div>
     </div>
-
-    <div class="performance-table">
-      <h3>Performance Metrics</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Library</th>
-            <th>Render Time (ms)</th>
-            <th>Memory Usage (MB)</th>
-            <th>CPU Usage (%)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(perf, library) in performance" :key="library">
-            <td>{{ library }}</td>
-            <td>{{ perf.renderTime.toFixed(2) }}</td>
-            <td>{{ perf.memoryUsage.toFixed(2) }}</td>
-            <td>{{ perf.cpuUsage.toFixed(2) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
 </template>
 
 <script>
@@ -153,21 +156,15 @@ export default {
       const now = Date.now()
       const timestamp = new Date(now)
       
-      // Generate realistic synthetic data
-      const time = now / 1000
-      const series1 = 50 + 30 * Math.sin(time * 0.1) + 10 * Math.random()
-      const series2 = 1024 + 512 * Math.sin(time * 0.05) + 100 * Math.random()
-      const series3 = 100 + 80 * Math.sin(time * 0.15) + 20 * Math.random()
-      const series4 = 75 + 50 * Math.sin(time * 0.08) + 15 * Math.random()
-      
+      // Compare render times
       this.chartData.timestamps.push(timestamp)
-      this.chartData.series1.push(series1)
-      this.chartData.series2.push(series2)
-      this.chartData.series3.push(series3)
-      this.chartData.series4.push(series4)
+      this.chartData.series1.push(this.performance.chartjs.renderTime)
+      this.chartData.series2.push(this.performance.plotly.renderTime)
+      this.chartData.series3.push(this.performance.uplot.renderTime)
+      this.chartData.series4.push(this.performance.webgl.renderTime)
       
       // Keep only last 1000 points to prevent memory issues
-      const maxPoints = 1000
+      const maxPoints = 10000
       if (this.chartData.timestamps.length > maxPoints) {
         this.chartData.timestamps.shift()
         this.chartData.series1.shift()

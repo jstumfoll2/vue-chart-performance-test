@@ -7,6 +7,7 @@
 
 <script>
 import Plotly from 'plotly.js-dist-min'
+// import osjs from 'os.js';
 
 export default {
   name: 'PlotlyChart',
@@ -72,9 +73,14 @@ export default {
       const layout = {
         margin: { t: 30, r: 30, b: 50, l: 50 },
         showlegend: true,
+        legend: {
+        y: -0.75,
+        x: -0.25,
+        yanchor: "bottom"
+        },
         xaxis: { title: 'Time' },
         yaxis: { title: 'Value' },
-        height: 350
+        height: 500
       }
       
       const config = {
@@ -106,8 +112,8 @@ export default {
       
       this.$emit('performance', {
         renderTime: endTime - startTime,
-        memoryUsage: (memoryAfter - memoryBefore) / 1024 / 1024,
-        cpuUsage: Math.random() * 25 + 15 // Simulated CPU usage
+        memoryUsage: (memoryAfter) / 1024 / 1024,
+        cpuUsage: 0 //osjs.loadavg()
       })
     }
   }

@@ -37,7 +37,8 @@ export default {
   data() {
     return {
       webglPlot: null,
-      lines: []
+      lines: [],
+      maxPoints: 1000
     }
   },
   mounted() {
@@ -67,7 +68,7 @@ export default {
       ]
       
       for (let i = 0; i < 4; i++) {
-        const line = new WebglLine(colors[i], 1000)
+        const line = new WebglLine(colors[i], this.maxPoints)
         this.lines.push(line)
         this.webglPlot.addLine(line)
       }
@@ -82,23 +83,46 @@ export default {
       const dataLength = this.data.timestamps.length
       const series = [this.data.series1, this.data.series2, this.data.series3, this.data.series4]
       
-      // Normalize data for WebGL coordinates
-      const maxValues = series.map(s => Math.max(...s))
-      const minValues = series.map(s => Math.min(...s))
+      // Calculate global min/max for consistent scaling across all series
+      const allValues = series.flat()
+      const globalMax = Math.max(...allValues)
+      const globalMin = Math.min(...allValues)
+      const range = globalMax - globalMin || 1
       
       for (let i = 0; i < 4; i++) {
         const line = this.lines[i]
-        line.clear()
         
-        const range = maxValues[i] - minValues[i] || 1
+        // Limit data points to prevent buffer overflow
+        const pointsToShow = Math.min(dataLength, this.maxPoints)
+        const startIndex = Math.max(0, dataLength - pointsToShow)
         
-        for (let j = 0; j < dataLength; j++) {
-          const x = (j / Math.max(dataLength - 1, 1)) * 2 - 1 // Normalize to [-1, 1]
-          const y = ((series[i][j] - minValues[i]) / range) * 2 - 1 // Normalize to [-1, 1]
-          line.addPoint(x, y)
+        // Clear the entire xy array to prevent ghost points
+        for (let k = 0; k < line.xy.length; k++) {
+          line.xy[k] = 0
         }
+        
+        // Set the number of points for this line
+        line.numPoints = pointsToShow
+        
+        for (let j = 0; j < pointsToShow; j++) {
+          const dataIndex = startIndex + j
+          
+          // Normalize X coordinate to [-1, 1] based on time progression
+          const x = (j / Math.max(pointsToShow - 1, 1)) * 2 - 1
+          
+          // Normalize Y coordinate to [-1, 1] based on value range
+          const y = ((series[i][dataIndex] - globalMin) / range) * 2 - 1
+          
+          // Directly set coordinates in the line's data array
+          line.xy[2 * j] = x      // X coordinate
+          line.xy[2 * j + 1] = y  // Y coordinate
+        }
+        
+        // Force buffer update
+        line.webglNumPoints = pointsToShow
       }
       
+      // Render the plot
       this.webglPlot.update()
       
       const endTime = performance.now()
@@ -106,9 +130,16 @@ export default {
       
       this.$emit('performance', {
         renderTime: endTime - startTime,
-        memoryUsage: (memoryAfter - memoryBefore) / 1024 / 1024,
+        memoryUsage: (memoryAfter) / 1024 / 1024,
         cpuUsage: Math.random() * 10 + 2 // Simulated CPU usage
       })
+    }
+  },
+  
+  beforeUnmount() {
+    // Clean up WebGL resources
+    if (this.webglPlot) {
+      this.webglPlot = null
     }
   }
 }

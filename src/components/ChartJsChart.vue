@@ -6,12 +6,14 @@
 </template>
 
 <script>
+import { markRaw } from 'vue'
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
+  LineController,
   Title,
   Tooltip,
   Legend,
@@ -23,6 +25,7 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
+  LineController,
   Title,
   Tooltip,
   Legend,
@@ -57,8 +60,44 @@ export default {
     initChart() {
       const ctx = this.$refs.chartCanvas.getContext('2d')
       
-      this.chart = new ChartJS(ctx, {
+      // Use markRaw to prevent Vue from making Chart.js instance reactive
+      this.chart = markRaw(new ChartJS(ctx, {
         type: 'line',
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          interaction: {
+            intersect: false
+          },
+          scales: {
+            x: {
+              type: 'category',
+              ticks: {
+                maxTicksLimit: 10
+              },
+              display: true
+            },
+            y: {
+              beginAtZero: true,
+              display: true
+            }
+          },
+          elements: {
+            point: {
+              radius: 0
+            },
+            line: {
+              borderWidth: 2
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            }
+          }
+        },
         data: {
           labels: [],
           datasets: [
@@ -95,61 +134,52 @@ export default {
               pointRadius: 0
             }
           ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: false,
-          scales: {
-            x: {
-              type: 'category',
-              ticks: {
-                maxTicksLimit: 10
-              }
-            },
-            y: {
-              beginAtZero: true
-            }
-          },
-          elements: {
-            point: {
-              radius: 0
-            }
-          }
         }
-      })
+      }))
     },
     
     updateChart() {
-      if (!this.chart || !this.data.timestamps.length) return
+      if (!this.chart || !this.data || !this.data.timestamps || !this.data.timestamps.length) return
       
-      const startTime = performance.now()
-      const memoryBefore = performance.memory ? performance.memory.usedJSHeapSize : 0
-      
-      const labels = this.data.timestamps.map(ts => 
-        ts.toLocaleTimeString('en-US', { 
-          hour12: false, 
-          minute: '2-digit', 
-          second: '2-digit' 
+      try {
+        const startTime = performance.now()
+        const memoryBefore = performance.memory ? performance.memory.usedJSHeapSize : 0
+
+        // Create non-reactive copies of the data
+        const labels = this.data.timestamps.map(ts => 
+          ts.toLocaleTimeString('en-US', { 
+            hour12: false, 
+            minute: '2-digit', 
+            second: '2-digit' 
+          })
+        )
+        
+        const series1Data = [...(this.data.series1 || [])]
+        const series2Data = [...(this.data.series2 || [])]
+        const series3Data = [...(this.data.series3 || [])]
+        const series4Data = [...(this.data.series4 || [])]
+
+        // Update chart data with non-reactive copies
+        this.chart.data.labels = labels
+        this.chart.data.datasets[0].data = series1Data
+        this.chart.data.datasets[1].data = series2Data
+        this.chart.data.datasets[2].data = series3Data
+        this.chart.data.datasets[3].data = series4Data
+
+        // Update the chart with no animation for better performance
+        this.chart.update('none')
+        
+        const endTime = performance.now()
+        const memoryAfter = performance.memory ? performance.memory.usedJSHeapSize : 0
+        
+        this.$emit('performance', {
+          renderTime: endTime - startTime,
+          memoryUsage: (memoryAfter) / 1024 / 1024,
+          cpuUsage: Math.random() * 20 + 10 // Simulated CPU usage
         })
-      )
-      
-      this.chart.data.labels = labels
-      this.chart.data.datasets[0].data = this.data.series1
-      this.chart.data.datasets[1].data = this.data.series2
-      this.chart.data.datasets[2].data = this.data.series3
-      this.chart.data.datasets[3].data = this.data.series4
-      
-      this.chart.update('none')
-      
-      const endTime = performance.now()
-      const memoryAfter = performance.memory ? performance.memory.usedJSHeapSize : 0
-      
-      this.$emit('performance', {
-        renderTime: endTime - startTime,
-        memoryUsage: (memoryAfter - memoryBefore) / 1024 / 1024,
-        cpuUsage: Math.random() * 20 + 10 // Simulated CPU usage
-      })
+      } catch (error) {
+        console.error('Chart.js update error:', error)
+      }
     }
   },
   
