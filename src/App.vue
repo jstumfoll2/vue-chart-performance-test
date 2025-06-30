@@ -18,43 +18,37 @@
             <option value="500">2 FPS (500ms)</option>
           </select>
         </div>
+        <div class="stat">
+          <span>Current FPS: {{ currentFPS }}</span>
+        </div>
+        <div class="stat">
+          <span>Total Points: {{ dataPoints * 4 }}</span>
+        </div>
+      </div>
+
+      <div class="performance-table">
+        <h3>Performance Metrics</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Library</th>
+              <th>Render Time (ms)</th>
+              <th>Memory Usage (MB)</th>
+              <th>CPU Usage (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(perf, library) in performance" :key="library">
+              <td>{{ library }}</td>
+              <td>{{ perf.renderTime.toFixed(2) }}</td>
+              <td>{{ perf.memoryUsage.toFixed(2) }}</td>
+              <td>{{ perf.cpuUsage.toFixed(2) }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </header>
 
-    <div class="stats">
-      <div class="stat">
-        <span>Data Points per Series: {{ dataPoints }}</span>
-      </div>
-      <div class="stat">
-        <span>Total Points: {{ dataPoints * 4 }}</span>
-      </div>
-      <div class="stat">
-        <span>FPS: {{ currentFPS }}</span>
-      </div>
-    </div>
-
-
-    <div class="performance-table">
-      <h3>Performance Metrics</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Library</th>
-            <th>Render Time (ms)</th>
-            <th>Memory Usage (MB)</th>
-            <th>CPU Usage (%)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(perf, library) in performance" :key="library">
-            <td>{{ library }}</td>
-            <td>{{ perf.renderTime.toFixed(2) }}</td>
-            <td>{{ perf.memoryUsage.toFixed(2) }}</td>
-            <td>{{ perf.cpuUsage.toFixed(2) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
   </div>
   
     <div class="charts-container">
@@ -105,7 +99,7 @@ export default {
   data() {
     return {
       isStreaming: false,
-      updateInterval: 100,
+      updateInterval: 16,
       intervalId: null,
       dataPoints: 0,
       currentFPS: 0,
@@ -286,10 +280,11 @@ button.active:hover {
 .stat span {
   font-weight: bold;
   font-size: 16px;
-  color: #2c3e50;
+  /* color: #2c3e50; */
 }
 
 .charts-container {
+  width: 100%;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
@@ -298,6 +293,7 @@ button.active:hover {
 }
 
 .chart-wrapper {
+  width: 100%;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -306,7 +302,8 @@ button.active:hover {
 
 .performance-table {
   margin: 20px;
-  background: white;
+  /* background: white; */
+  background: #2c3e50;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -314,7 +311,7 @@ button.active:hover {
 
 .performance-table h3 {
   margin-bottom: 15px;
-  color: #2c3e50;
+  /* color: #2c3e50; */
 }
 
 table {
